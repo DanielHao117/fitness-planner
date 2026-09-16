@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>健身计划</title>
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="description" content="训练计划与动作库管理" />
+
+  <!-- iOS 添加到主屏 -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="健身计划" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>健身计划</h1>
+    <nav class="tabs">
+      <button class="tab active" data-view="plans">训练计划</button>
+      <button class="tab" data-view="exercises">动作库</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 训练计划 -->
+    <section id="view-plans" class="view active">
+      <div class="toolbar">
+        <button id="new-plan" class="primary">＋ 新建计划</button>
+      </div>
+      <div id="plans-list" class="cards"></div>
+      <p id="plans-empty" class="empty hidden">还没有计划，点击「新建计划」开始。</p>
+    </section>
+
+    <!-- 动作库 -->
+    <section id="view-exercises" class="view">
+      <div class="toolbar">
+        <input id="ex-name" placeholder="动作名称，例如：深蹲" />
+        <input id="ex-group" placeholder="部位，例如：腿" />
+        <input id="ex-video" placeholder="教学视频链接或本地文件路径（可留空）" />
+        <button id="add-exercise" class="primary">添加动作</button>
+      </div>
+      <div id="exercises-list" class="cards"></div>
+      <p id="exercises-empty" class="empty hidden">动作库为空，先添加一些动作吧。</p>
+    </section>
+  </main>
+
+  <!-- 计划编辑弹层 -->
+  <div id="plan-modal" class="overlay hidden">
+    <div class="modal wide">
+      <div class="modal-head">
+        <h2 id="plan-modal-title">新建计划</h2>
+        <button class="icon-btn" data-close="plan-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>计划名称<input id="plan-name" placeholder="例如：推拉腿 4 分化" /></label>
+        <label>目标<input id="plan-goal" placeholder="例如：增肌 / 减脂 / 提升力量" /></label>
+        <label>备注<textarea id="plan-notes" rows="2"></textarea></label>
+
+        <div class="items-head">
+          <h3>训练动作</h3>
+          <button id="add-item" class="ghost">＋ 添加动作</button>
+        </div>
+        <div id="plan-items"></div>
+        <p id="items-empty" class="empty hidden">还没有动作，点击「添加动作」。</p>
+      </div>
+      <div class="modal-foot">
+        <button class="ghost" data-close="plan-modal">取消</button>
+        <button id="save-plan" class="primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 计划详情弹层 -->
+  <div id="detail-modal" class="overlay hidden">
+    <div class="modal wide">
+      <div class="modal-head">
+        <h2 id="detail-title">计划详情</h2>
+        <button class="icon-btn" data-close="detail-modal">✕</button>
+      </div>
+      <div id="detail-body" class="modal-body"></div>
+      <div class="modal-foot">
+        <button class="ghost" data-close="detail-modal">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视频弹层 -->
+  <div id="video-modal" class="overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="video-title">动作演示</h2>
+        <button class="icon-btn" data-close="video-modal">✕</button>
+      </div>
+      <div id="video-body" class="video-body"></div>
+    </div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="main.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+:root {
+  --bg: #0f1115;
+  --panel: #1a1d24;
+  --panel-2: #22262f;
+  --border: #2c313b;
+  --text: #e8eaed;
+  --muted: #9aa1ac;
+  --primary: #3b82f6;
+  --primary-hover: #2f6fe0;
+  --danger: #ef4444;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 { font-size: 18px; margin: 0; }
+
+.tabs { display: flex; gap: 6px; }
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tab:hover { background: var(--panel-2); color: var(--text); }
+.tab.active { background: var(--primary); color: #fff; }
+
+main { padding: 24px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+input, textarea, select {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+
+.toolbar input { flex: 1; min-width: 160px; }
+
+button {
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  padding: 9px 16px;
+}
+
+.primary { background: var(--primary); color: #fff; }
+.primary:hover { background: var(--primary-hover); }
+
+.ghost { background: transparent; border-color: var(--border); color: var(--text); }
+.ghost:hover { background: var(--panel-2); }
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  padding: 4px 8px;
+}
+.icon-btn:hover { color: var(--text); }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card h3 { margin: 0; font-size: 16px; }
+.card .meta { color: var(--muted); font-size: 13px; }
+.card .row { display: flex; gap: 8px; margin-top: auto; }
+.card .row button { padding: 6px 12px; }
+
+.tag {
+  display: inline-block;
+  background: var(--panel-2);
+  color: var(--muted);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.empty { color: var(--muted); text-align: center; padding: 32px 0; }
+.hidden { display: none !important; }
+
+/* Modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal.wide { max-width: 820px; }
+
+.modal-head, .modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.modal-head { border-bottom: 1px solid var(--border); }
+.modal-head h2 { margin: 0; font-size: 16px; }
+.modal-foot { border-top: 1px solid var(--border); gap: 10px; justify-content: flex-end; }
+
+.modal-body {
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.modal-body label input,
+.modal-body label textarea { color: var(--text); }
+
+.items-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.items-head h3 { margin: 0; font-size: 14px; }
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.7fr 0.7fr 0.8fr 0.8fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.item-row input, .item-row select { width: 100%; padding: 7px 8px; }
+.item-row .remove { background: transparent; border: none; color: var(--danger); font-size: 15px; }
+
+.item-head {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.7fr 0.7fr 0.8fr 0.8fr auto;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.video-body { padding: 0 18px 18px; }
+.video-body video, .video-body iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border: none;
+  border-radius: var(--radius);
+}
+
+/* ---------------- 移动端 / iPhone 适配 ---------------- */
+body {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .topbar {
+    padding-top: calc(14px + env(safe-area-inset-top));
+    padding-left: calc(24px + env(safe-area-inset-left));
+    padding-right: calc(24px + env(safe-area-inset-right));
+  }
+  main {
+    padding-left: calc(24px + env(safe-area-inset-left));
+    padding-right: calc(24px + env(safe-area-inset-right));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+  .overlay {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar { gap: 10px; padding: 12px 16px; }
+  .topbar h1 { font-size: 17px; }
+  .tabs { margin-left: auto; }
+  .tab { padding: 10px 12px; }
+  main { padding: 16px; }
+
+  .cards { grid-template-columns: 1fr; }
+  .toolbar { flex-direction: column; }
+  .toolbar input { min-width: 0; }
+
+  /* 16px 可避免 iOS 聚焦输入框时自动放大页面 */
+  input, textarea, select { font-size: 16px; }
+  button { padding: 11px 16px; }
+  .card .row button { padding: 9px 14px; }
+
+  .overlay { padding: 12px; align-items: flex-end; }
+  .modal { max-height: 92vh; }
+  .modal.wide { max-width: 100%; }
+
+  /* 训练动作编辑行：改为横向滚动，避免列被压扁 */
+  .item-head, .item-row {
+    grid-template-columns: 120px 92px 60px 60px 72px 72px 36px;
+    width: max-content;
+    min-width: 100%;
+  }
+  #plan-items { overflow-x: auto; padding-bottom: 4px; }
+}
+

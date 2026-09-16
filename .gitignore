@@ -1,0 +1,17 @@
+# Rust
+/src-tauri/target/
+**/*.rs.bk
+
+# Node
+/node_modules
+/package-lock.json
+
+# Tauri
+/src-tauri/gen/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local data (app stores its DB outside the repo, but just in case)
+*.db
