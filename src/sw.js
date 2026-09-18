@@ -1,4 +1,4 @@
-const CACHE = "fitness-planner-v4";
+const CACHE = "fitness-planner-v19";
 const ASSETS = [
   "./index.html",
   "./styles.css",
@@ -6,6 +6,7 @@ const ASSETS = [
   "./db.js",
   "./manifest.webmanifest",
   "./flame.svg",
+  "./fitness-bg.jpg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",

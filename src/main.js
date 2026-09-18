@@ -53,6 +53,8 @@ const EXERCISE_PRESETS = {
 const state = {
   plans: [],
   editing: { id: null, items: [] },
+  library: { groups: [] },
+  libSelected: 0,
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -72,13 +74,61 @@ async function call(cmd, args) {
   }
 }
 
+/* ---------------- 动作库（可增删改，持久化到数据库） ---------------- */
+const LIBRARY_KEY = "exercise_library";
+
+function defaultLibrary() {
+  return {
+    groups: MUSCLE_GROUPS.map((name) => ({
+      name,
+      exercises: [...EXERCISE_PRESETS[name]],
+    })),
+  };
+}
+
+async function loadLibrary() {
+  const raw = await call("get_setting", { key: LIBRARY_KEY });
+  if (raw) {
+    try {
+      const lib = JSON.parse(raw);
+      if (lib && Array.isArray(lib.groups)) {
+        state.library = lib;
+        return;
+      }
+    } catch {
+      /* ignore, fall back */
+    }
+  }
+  state.library = defaultLibrary();
+}
+
+function saveLibrary() {
+  return call("set_setting", {
+    key: LIBRARY_KEY,
+    value: JSON.stringify(state.library),
+  });
+}
+
+function groupNames() {
+  return state.library.groups.map((g) => g.name);
+}
+
+function exercisesFor(group) {
+  const g = state.library.groups.find((x) => x.name === group);
+  return g ? g.exercises : [];
+}
+
 /* ---------------- 弹层 ---------------- */
 function openModal(id) {
   $(`#${id}`).classList.remove("hidden");
 }
 function closeModal(id) {
   if (id === "video-modal") $("#video-body").innerHTML = "";
+  if (id === "wheel-modal") wheelState = null;
   $(`#${id}`).classList.add("hidden");
+  if (id === "library-modal" && !$("#plan-modal").classList.contains("hidden")) {
+    renderPlanItems();
+  }
 }
 $$("[data-close]").forEach((btn) =>
   btn.addEventListener("click", () => closeModal(btn.dataset.close))
@@ -156,7 +206,7 @@ $("#new-plan").addEventListener("click", () => {
 });
 
 function nameOptions(group, current) {
-  const presets = EXERCISE_PRESETS[group] || [];
+  const presets = exercisesFor(group);
   const has = presets.includes(current);
   return (
     `<option value="">选择动作</option>` +
@@ -178,10 +228,10 @@ function nameOptions(group, current) {
 function renderPlanItems() {
   const wrap = $("#plan-items");
   wrap.innerHTML =
-    `<div class="item-head"><span>部位</span><span>动作</span><span>训练日</span><span>组</span><span>次</span><span>重量kg</span><span>休息s</span><span></span></div>` +
+    `<div class="item-head"><span>部位</span><span>动作</span><span>组</span><span>次</span><span>重量kg</span><span></span></div>` +
     state.editing.items
       .map((it, i) => {
-        const presets = EXERCISE_PRESETS[it.muscle_group] || [];
+        const presets = exercisesFor(it.muscle_group);
         const isCustom = it.custom || (!!it.name && !presets.includes(it.name));
         const nameField = isCustom
           ? `<input data-field="name" placeholder="自定义动作名称" value="${esc(
@@ -191,24 +241,33 @@ function renderPlanItems() {
               it.muscle_group,
               it.name
             )}</select>`;
+        const groups = groupNames();
+        const groupList =
+          !it.muscle_group || groups.includes(it.muscle_group)
+            ? groups
+            : [it.muscle_group, ...groups];
         return `
     <div class="item-row" data-index="${i}">
       <select data-field="muscle_group">
-        ${MUSCLE_GROUPS.map(
-          (g) =>
-            `<option value="${g}" ${
-              g === it.muscle_group ? "selected" : ""
-            }>${g}</option>`
-        ).join("")}
+        ${groupList
+          .map(
+            (g) =>
+              `<option value="${esc(g)}" ${
+                g === it.muscle_group ? "selected" : ""
+              }>${esc(g)}</option>`
+          )
+          .join("")}
       </select>
       ${nameField}
-      <input data-field="day_label" value="${esc(it.day_label)}" />
-      <input data-field="sets" type="number" min="1" value="${it.sets}" />
-      <input data-field="reps" type="number" min="1" value="${it.reps}" />
-      <input data-field="weight_kg" type="number" step="0.5" min="0" value="${
+      <button type="button" class="val" data-wheel-open="${i}" data-field="sets">${
+        it.sets
+      }</button>
+      <button type="button" class="val" data-wheel-open="${i}" data-field="reps">${
+        it.reps
+      }</button>
+      <button type="button" class="val" data-wheel-open="${i}" data-field="weight_kg">${
         it.weight_kg
-      }" />
-      <input data-field="rest_sec" type="number" min="0" value="${it.rest_sec}" />
+      }</button>
       <button class="remove" data-remove="${i}" title="移除">✕</button>
     </div>`;
       })
@@ -256,16 +315,112 @@ $("#plan-items").addEventListener("change", (e) => {
 });
 
 $("#plan-items").addEventListener("click", (e) => {
+  const open = e.target.dataset.wheelOpen;
+  if (open !== undefined) {
+    openWheel(Number(open));
+    return;
+  }
   const idx = e.target.dataset.remove;
   if (idx === undefined) return;
   state.editing.items.splice(Number(idx), 1);
   renderPlanItems();
 });
 
+/* ---------------- 组/次/重量 轮盘 ---------------- */
+const WHEEL_ITEM_H = 40;
+const WHEEL_FIELDS = ["sets", "reps", "weight_kg"];
+const WHEEL_RANGES = {
+  sets: { min: 1, max: 20, step: 1 },
+  reps: { min: 1, max: 50, step: 1 },
+  weight_kg: { min: 0, max: 300, step: 2.5 },
+};
+let wheelState = null;
+
+function wheelValues(field) {
+  const { min, max, step } = WHEEL_RANGES[field];
+  const out = [];
+  for (let v = min; v <= max + 1e-9; v += step) {
+    out.push(Math.round(v * 100) / 100);
+  }
+  return out;
+}
+
+function nearestIndex(values, target) {
+  let idx = 0;
+  let best = Infinity;
+  values.forEach((v, i) => {
+    const d = Math.abs(v - target);
+    if (d < best) {
+      best = d;
+      idx = i;
+    }
+  });
+  return idx;
+}
+
+function updateWheelActive(el, field) {
+  const items = el.querySelectorAll(".wheel-item");
+  const idx = Math.min(
+    items.length - 1,
+    Math.max(0, Math.round(el.scrollTop / WHEEL_ITEM_H))
+  );
+  items.forEach((node, i) => node.classList.toggle("active", i === idx));
+  if (wheelState && field) {
+    wheelState.values[field] = wheelValues(field)[idx];
+  }
+}
+
+function openWheel(index) {
+  const it = state.editing.items[index];
+  if (!it) return;
+  wheelState = {
+    index,
+    values: { sets: it.sets, reps: it.reps, weight_kg: it.weight_kg },
+  };
+  $("#wheel-title").textContent = it.name || "选择数值";
+  $("#wheel-wheels").innerHTML =
+    `<div class="wheel-band"></div>` +
+    WHEEL_FIELDS.map((field) => {
+      const values = wheelValues(field);
+      const items = values
+        .map((v) => `<div class="wheel-item">${v}</div>`)
+        .join("");
+      return `<div class="wheel" data-wheel="${field}"><div class="wheel-spacer"></div>${items}<div class="wheel-spacer"></div></div>`;
+    }).join("");
+  openModal("wheel-modal");
+
+  requestAnimationFrame(() => {
+    WHEEL_FIELDS.forEach((field) => {
+      const el = $(`#wheel-wheels .wheel[data-wheel="${field}"]`);
+      if (!el) return;
+      const values = wheelValues(field);
+      el.scrollTop = nearestIndex(values, wheelState.values[field]) * WHEEL_ITEM_H;
+      updateWheelActive(el, field);
+      el.addEventListener("scroll", () => {
+        clearTimeout(el._snap);
+        el._snap = setTimeout(() => updateWheelActive(el, field), 90);
+      });
+    });
+  });
+}
+
+$("#wheel-confirm").addEventListener("click", () => {
+  if (!wheelState) return;
+  const it = state.editing.items[wheelState.index];
+  if (it) {
+    it.sets = Number(wheelState.values.sets);
+    it.reps = Number(wheelState.values.reps);
+    it.weight_kg = Number(wheelState.values.weight_kg);
+  }
+  wheelState = null;
+  closeModal("wheel-modal");
+  renderPlanItems();
+});
+
 $("#add-item").addEventListener("click", () => {
-  const group = MUSCLE_GROUPS[0];
+  const group = groupNames()[0] || "";
   state.editing.items.push({
-    name: EXERCISE_PRESETS[group][0],
+    name: exercisesFor(group)[0] || "",
     muscle_group: group,
     video_url: null,
     day_label: "第 1 天",
@@ -337,39 +492,25 @@ async function startEditPlan(id) {
 async function showPlanDetail(id) {
   const plan = await call("get_plan", { id });
   $("#detail-title").textContent = plan.name;
-  const days = {};
-  plan.items.forEach((it) => {
-    (days[it.day_label] ||= []).push(it);
-  });
-  const html = Object.entries(days)
+  const html = plan.items
     .map(
-      ([day, items]) => `
-      <div>
-        <h3 class="items-head">${esc(day)}</h3>
-        ${items
-          .map(
-            (it) => `
-          <div class="card" style="margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-              <div>
-                <h3>${esc(it.name)}</h3>
-                <div class="meta">${it.sets} 组 × ${it.reps} 次 · ${
-              it.weight_kg
-            } kg · 休息 ${it.rest_sec}s${
-              it.muscle_group ? " · " + esc(it.muscle_group) : ""
-            }</div>
-              </div>
-              ${
-                it.video_url
-                  ? `<button class="ghost" data-video-url="${esc(
-                      it.video_url
-                    )}" data-video-name="${esc(it.name)}">看演示</button>`
-                  : ""
-              }
-            </div>
-          </div>`
-          )
-          .join("")}
+      (it) => `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div>
+            <h3>${esc(it.name)}</h3>
+            <div class="meta">${it.sets} 组 × ${it.reps} 次 · ${it.weight_kg} kg${
+        it.muscle_group ? " · " + esc(it.muscle_group) : ""
+      }</div>
+          </div>
+          ${
+            it.video_url
+              ? `<button class="ghost" data-video-url="${esc(
+                  it.video_url
+                )}" data-video-name="${esc(it.name)}">看演示</button>`
+              : ""
+          }
+        </div>
       </div>`
     )
     .join("");
@@ -383,7 +524,138 @@ $("#detail-body").addEventListener("click", (e) => {
   if (url) playVideo(e.target.dataset.videoName, url);
 });
 
+/* ---------------- 管理动作库 ---------------- */
+function renderGroupList() {
+  $("#lib-group-list").innerHTML = state.library.groups
+    .map(
+      (g, i) => `
+      <div class="lib-row ${i === state.libSelected ? "active" : ""}" data-group-row="${i}">
+        <input data-group-name="${i}" value="${esc(g.name)}" placeholder="部位名称" />
+        <button class="remove" data-del-group="${i}" title="删除">✕</button>
+      </div>`
+    )
+    .join("");
+}
+
+function renderExList() {
+  const group = state.library.groups[state.libSelected];
+  $("#lib-ex-title").textContent = group ? `动作 · ${group.name}` : "动作";
+  $("#lib-ex-list").innerHTML = group
+    ? group.exercises
+        .map(
+          (n, i) => `
+      <div class="lib-row">
+        <input data-ex-name="${i}" value="${esc(n)}" placeholder="动作名称" />
+        <button class="remove" data-del-ex="${i}" title="删除">✕</button>
+      </div>`
+        )
+        .join("")
+    : `<p class="empty">还没有部位，先添加一个部位。</p>`;
+}
+
+function renderLibrary() {
+  if (state.libSelected >= state.library.groups.length) {
+    state.libSelected = Math.max(0, state.library.groups.length - 1);
+  }
+  renderGroupList();
+  renderExList();
+}
+
+function selectGroup(i) {
+  state.libSelected = i;
+  $$("#lib-group-list .lib-row").forEach((r, idx) =>
+    r.classList.toggle("active", idx === i)
+  );
+  renderExList();
+}
+
+$("#manage-library").addEventListener("click", () => {
+  state.libSelected = 0;
+  renderLibrary();
+  openModal("library-modal");
+});
+
+$("#lib-add-group").addEventListener("click", async () => {
+  state.library.groups.push({
+    name: `部位${state.library.groups.length + 1}`,
+    exercises: [],
+  });
+  state.libSelected = state.library.groups.length - 1;
+  await saveLibrary();
+  renderLibrary();
+  const inputs = $$("#lib-group-list input");
+  const last = inputs[inputs.length - 1];
+  if (last) {
+    last.focus();
+    last.select();
+  }
+});
+
+$("#lib-add-ex").addEventListener("click", async () => {
+  const group = state.library.groups[state.libSelected];
+  if (!group) return alert("请先添加一个部位");
+  group.exercises.push(`动作${group.exercises.length + 1}`);
+  await saveLibrary();
+  renderExList();
+  const inputs = $$("#lib-ex-list input");
+  const last = inputs[inputs.length - 1];
+  if (last) {
+    last.focus();
+    last.select();
+  }
+});
+
+$("#lib-group-list").addEventListener("click", async (e) => {
+  const row = e.target.closest("[data-group-row]");
+  if (!row) return;
+  const i = Number(row.dataset.groupRow);
+  const del = e.target.dataset.delGroup;
+  if (del !== undefined) {
+    if (!confirm("删除该部位及其动作？")) return;
+    state.library.groups.splice(Number(del), 1);
+    await saveLibrary();
+    renderLibrary();
+    return;
+  }
+  if (i !== state.libSelected) selectGroup(i);
+});
+
+$("#lib-group-list").addEventListener("focusin", (e) => {
+  const row = e.target.closest("[data-group-row]");
+  if (!row) return;
+  const i = Number(row.dataset.groupRow);
+  if (i !== state.libSelected) selectGroup(i);
+});
+
+$("#lib-group-list").addEventListener("change", async (e) => {
+  const idx = e.target.dataset.groupName;
+  if (idx === undefined) return;
+  state.library.groups[Number(idx)].name = e.target.value.trim() || "未命名部位";
+  await saveLibrary();
+  renderExList();
+});
+
+$("#lib-ex-list").addEventListener("change", async (e) => {
+  const idx = e.target.dataset.exName;
+  if (idx === undefined) return;
+  const group = state.library.groups[state.libSelected];
+  if (!group) return;
+  group.exercises[Number(idx)] = e.target.value.trim() || "未命名动作";
+  await saveLibrary();
+});
+
+$("#lib-ex-list").addEventListener("click", async (e) => {
+  const del = e.target.dataset.delEx;
+  if (del === undefined) return;
+  const group = state.library.groups[state.libSelected];
+  if (!group) return;
+  group.exercises.splice(Number(del), 1);
+  await saveLibrary();
+  renderExList();
+});
+
 /* ---------------- 启动 ---------------- */
 (async function init() {
+  await loadLibrary();
   await loadPlans();
 })();

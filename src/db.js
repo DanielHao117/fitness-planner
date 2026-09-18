@@ -5,9 +5,10 @@
  */
 (function () {
   const DB_NAME = "fitness-planner";
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const PLANS = "plans";
   const ITEMS = "plan_items";
+  const SETTINGS = "settings";
 
   let dbPromise = null;
 
@@ -50,6 +51,9 @@
           if (!db.objectStoreNames.contains(ITEMS)) {
             const s = db.createObjectStore(ITEMS, { keyPath: "id", autoIncrement: true });
             s.createIndex("plan_id", "plan_id", { unique: false });
+          }
+          if (!db.objectStoreNames.contains(SETTINGS)) {
+            db.createObjectStore(SETTINGS, { keyPath: "key" });
           }
         };
 
@@ -249,12 +253,31 @@
     );
   }
 
+  /* ---------------- 设置 ---------------- */
+  function getSetting({ key }) {
+    return getOne(SETTINGS, key).then((r) => (r ? r.value : null));
+  }
+
+  function setSetting({ key, value }) {
+    return openDB().then(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const t = db.transaction(SETTINGS, "readwrite");
+          t.objectStore(SETTINGS).put({ key, value });
+          t.oncomplete = () => resolve();
+          t.onerror = () => reject(t.error);
+        })
+    );
+  }
+
   const handlers = {
     list_plans: () => listPlans(),
     get_plan: (a) => getPlan(a),
     create_plan: (a) => createPlan(a),
     update_plan: (a) => updatePlan(a),
     delete_plan: (a) => deletePlan(a),
+    get_setting: (a) => getSetting(a),
+    set_setting: (a) => setSetting(a),
   };
 
   function call(cmd, args) {

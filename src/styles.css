@@ -16,7 +16,12 @@
 body {
   margin: 0;
   font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: url("fitness-bg.jpg");
+  background-size: contain;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--text);
   font-size: 14px;
 }
@@ -63,30 +68,7 @@ body {
 }
 
 .ember {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: emberFloat 2.8s ease-in-out infinite;
-}
-
-.ember.e1 { animation-duration: 2.4s; animation-delay: -0.2s; }
-.ember.e2 { animation-duration: 3.3s; animation-delay: -1.3s; }
-.ember.e3 { animation-duration: 2.7s; animation-delay: -0.8s; }
-.ember.e4 { animation-duration: 3.6s; animation-delay: -1.9s; }
-
-.ember.e2, .ember.e4 { animation-name: emberFloatAlt; }
-
-@keyframes emberFloat {
-  0%, 100% { transform: translate(0, 3px) rotate(0deg); opacity: 0.65; }
-  25% { transform: translate(4px, -4px) rotate(5deg); opacity: 0.85; }
-  50% { transform: translate(0, -9px) rotate(0deg); opacity: 1; }
-  75% { transform: translate(-4px, -4px) rotate(-5deg); opacity: 0.85; }
-}
-
-@keyframes emberFloatAlt {
-  0%, 100% { transform: translate(0, 3px) rotate(0deg); opacity: 0.65; }
-  25% { transform: translate(-4px, -4px) rotate(-5deg); opacity: 0.85; }
-  50% { transform: translate(0, -9px) rotate(0deg); opacity: 1; }
-  75% { transform: translate(4px, -4px) rotate(5deg); opacity: 0.85; }
+  opacity: 0.9;
 }
 
 .tabs { display: flex; gap: 6px; }
@@ -137,7 +119,7 @@ main { padding: 24px; }
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin-top: 16vh;
+  margin-top: 6px;
   margin-bottom: 18px;
 }
 
@@ -233,7 +215,27 @@ button {
   font-size: 12px;
 }
 
-.empty { color: var(--muted); text-align: center; padding: 32px 0; }
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 32px 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+/* 提示文字上移，但按钮保持在原位：用相邻兄弟选择器补偿间距 */
+#plans-empty:not(.hidden) + .toolbar {
+  margin-top: calc(9vh + 6px);
+}
+
+#plans-empty {
+  margin-top: 5vh;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255, 150, 20, 0.95), 0 0 4px rgba(255, 90, 0, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.95);
+}
 .hidden { display: none !important; }
 
 /* Modal */
@@ -299,10 +301,11 @@ button {
 }
 
 .items-head h3 { margin: 0; font-size: 14px; }
+.items-actions { display: flex; gap: 8px; }
 
 .item-row {
   display: grid;
-  grid-template-columns: 0.6fr 1.7fr 1fr 0.7fr 0.7fr 0.8fr 0.8fr auto;
+  grid-template-columns: 0.6fr 1.7fr 0.7fr 0.7fr 0.8fr auto;
   gap: 8px;
   margin-bottom: 8px;
   align-items: center;
@@ -313,12 +316,130 @@ button {
 
 .item-head {
   display: grid;
-  grid-template-columns: 0.6fr 1.7fr 1fr 0.7fr 0.7fr 0.8fr 0.8fr auto;
+  grid-template-columns: 0.6fr 1.7fr 0.7fr 0.7fr 0.8fr auto;
   gap: 8px;
   color: var(--muted);
   font-size: 12px;
   margin-bottom: 4px;
 }
+
+/* 管理动作库 */
+.lib-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 18px;
+}
+
+.lib-col { min-width: 0; }
+
+.lib-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.lib-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: var(--radius);
+}
+
+.lib-row.active {
+  background: var(--panel-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.lib-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+}
+
+.lib-row .remove {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  font-size: 15px;
+  padding: 4px 8px;
+}
+
+/* 组/次/重量 轮盘选择器 */
+.item-row .val {
+  width: 100%;
+  padding: 7px 8px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+}
+.item-row .val:hover { border-color: var(--primary); }
+
+.wheel-modal { max-width: 440px; }
+.wheel-body { padding: 10px 18px 6px; }
+
+.wheel-labels {
+  display: flex;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.wheel-labels span { flex: 1; }
+
+.wheel-wheels {
+  position: relative;
+  display: flex;
+  gap: 10px;
+}
+
+.wheel-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+  background: var(--panel-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wheel {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  height: 200px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.wheel::-webkit-scrollbar { display: none; }
+
+.wheel-item {
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  scroll-snap-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+.wheel-item.active {
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+}
+.wheel-spacer { height: 80px; }
 
 .video-body { padding: 0 18px 18px; }
 .video-body video, .video-body iframe {
@@ -373,9 +494,11 @@ body {
   .modal { max-height: 92vh; }
   .modal.wide { max-width: 100%; }
 
+  .lib-grid { grid-template-columns: 1fr; }
+
   /* 训练动作编辑行：改为横向滚动，避免列被压扁 */
   .item-head, .item-row {
-    grid-template-columns: 72px 140px 96px 56px 56px 68px 68px 36px;
+    grid-template-columns: 72px 160px 56px 56px 68px 36px;
     width: max-content;
     min-width: 100%;
   }

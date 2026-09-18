@@ -18,18 +18,12 @@
       <stop offset="100%" stop-color="#ff4200" stop-opacity="0"/>
     </radialGradient>
     <filter id="wisp" x="-12%" y="-60%" width="124%" height="220%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.02" numOctaves="2" seed="11" result="n">
-        <animate attributeName="baseFrequency" dur="7s"
-          values="0.008 0.02;0.013 0.028;0.008 0.02" repeatCount="indefinite"/>
-      </feTurbulence>
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.02" numOctaves="2" seed="11" result="n"/>
       <feDisplacementMap in="SourceGraphic" in2="n" scale="26" xChannelSelector="R" yChannelSelector="G"/>
       <feGaussianBlur stdDeviation="1"/>
     </filter>
     <filter id="wisp2" x="-12%" y="-60%" width="124%" height="220%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.034" numOctaves="2" seed="4" result="n2">
-        <animate attributeName="baseFrequency" dur="5s"
-          values="0.015 0.034;0.022 0.046;0.015 0.034" repeatCount="indefinite"/>
-      </feTurbulence>
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.034" numOctaves="2" seed="4" result="n2"/>
       <feDisplacementMap in="SourceGraphic" in2="n2" scale="16" xChannelSelector="R" yChannelSelector="G"/>
       <feGaussianBlur stdDeviation="0.6"/>
     </filter>

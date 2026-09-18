@@ -51,11 +51,11 @@
   <main>
     <!-- 训练计划（动作直接属于计划） -->
     <section id="view-plans" class="view active">
+      <p id="plans-empty" class="empty hidden">Make The Plan, Just Do It!</p>
       <div class="toolbar">
         <button id="new-plan" class="primary">＋ 新建计划</button>
       </div>
       <div id="plans-list" class="cards"></div>
-      <p id="plans-empty" class="empty hidden">赶紧添加你的计划，开始运动吧！</p>
     </section>
   </main>
 
@@ -69,7 +69,10 @@
       <div class="modal-body">
         <div class="items-head">
           <h3>训练动作</h3>
-          <button id="add-item" class="ghost">＋ 添加动作</button>
+          <div class="items-actions">
+            <button id="add-item" class="primary">＋ 添加动作</button>
+            <button id="manage-library" class="primary">管理动作库</button>
+          </div>
         </div>
         <div id="plan-items"></div>
         <p id="items-empty" class="empty hidden">点击「添加动作」，赶快开始你的训练吧！</p>
@@ -91,6 +94,57 @@
       <div id="detail-body" class="modal-body"></div>
       <div class="modal-foot">
         <button class="ghost" data-close="detail-modal">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 管理动作库弹层 -->
+  <div id="library-modal" class="overlay hidden">
+    <div class="modal wide">
+      <div class="modal-head">
+        <h2>管理动作库</h2>
+        <button class="icon-btn" data-close="library-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="lib-grid">
+          <div class="lib-col">
+            <div class="items-head">
+              <h3>部位</h3>
+              <button id="lib-add-group" class="ghost">＋ 添加部位</button>
+            </div>
+            <div id="lib-group-list" class="lib-list"></div>
+          </div>
+          <div class="lib-col">
+            <div class="items-head">
+              <h3 id="lib-ex-title">动作</h3>
+              <button id="lib-add-ex" class="ghost">＋ 添加动作</button>
+            </div>
+            <div id="lib-ex-list" class="lib-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="primary" data-close="library-modal">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 组/次/重量 轮盘弹层 -->
+  <div id="wheel-modal" class="overlay hidden">
+    <div class="modal wheel-modal">
+      <div class="modal-head">
+        <h2 id="wheel-title">选择数值</h2>
+        <button class="icon-btn" data-close="wheel-modal">✕</button>
+      </div>
+      <div class="wheel-body">
+        <div class="wheel-labels"><span>组</span><span>次</span><span>重量kg</span></div>
+        <div id="wheel-wheels" class="wheel-wheels">
+          <div class="wheel-band"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="ghost" data-close="wheel-modal">取消</button>
+        <button id="wheel-confirm" class="primary">确定</button>
       </div>
     </div>
   </div>

@@ -30,6 +30,11 @@ CREATE TABLE IF NOT EXISTS plan_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_plan_items_plan ON plan_items(plan_id);
+
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 "#;
 
 fn has_column(conn: &Connection, table: &str, column: &str) -> bool {

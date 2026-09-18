@@ -1,6 +1,6 @@
 use crate::db::Db;
 use crate::models::*;
-use rusqlite::params;
+use rusqlite::{params, OptionalExtension};
 use tauri::State;
 
 fn err<E: std::fmt::Display>(e: E) -> String {
@@ -146,5 +146,29 @@ pub fn delete_plan(db: State<Db>, id: i64) -> Result<(), String> {
     let conn = db.0.lock().map_err(err)?;
     conn.execute("DELETE FROM plans WHERE id = ?1", params![id])
         .map_err(err)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_setting(db: State<Db>, key: String) -> Result<Option<String>, String> {
+    let conn = db.0.lock().map_err(err)?;
+    conn.query_row(
+        "SELECT value FROM settings WHERE key = ?1",
+        params![key],
+        |r| r.get(0),
+    )
+    .optional()
+    .map_err(err)
+}
+
+#[tauri::command]
+pub fn set_setting(db: State<Db>, key: String, value: String) -> Result<(), String> {
+    let conn = db.0.lock().map_err(err)?;
+    conn.execute(
+        "INSERT INTO settings (key, value) VALUES (?1, ?2)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        params![key, value],
+    )
+    .map_err(err)?;
     Ok(())
 }
