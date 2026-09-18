@@ -1,24 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Exercise {
-    pub id: i64,
-    pub name: String,
-    pub muscle_group: String,
-    pub video_url: Option<String>,
-    pub notes: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct NewExercise {
-    pub name: String,
-    #[serde(default)]
-    pub muscle_group: String,
-    pub video_url: Option<String>,
-    pub notes: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct PlanSummary {
     pub id: i64,
     pub name: String,
@@ -30,8 +12,7 @@ pub struct PlanSummary {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PlanItem {
     pub id: i64,
-    pub exercise_id: i64,
-    pub exercise_name: String,
+    pub name: String,
     pub muscle_group: String,
     pub video_url: Option<String>,
     pub day_label: String,
@@ -54,7 +35,10 @@ pub struct Plan {
 
 #[derive(Debug, Deserialize)]
 pub struct PlanItemInput {
-    pub exercise_id: i64,
+    pub name: String,
+    #[serde(default)]
+    pub muscle_group: String,
+    pub video_url: Option<String>,
     #[serde(default = "default_day")]
     pub day_label: String,
     pub sets: i64,

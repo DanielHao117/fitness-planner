@@ -6,15 +6,15 @@
     name="viewport"
     content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
   />
-  <title>健身计划</title>
+  <title>FITNESS</title>
   <meta name="theme-color" content="#0f1115" />
-  <meta name="description" content="训练计划与动作库管理" />
+  <meta name="description" content="训练计划与动作管理" />
 
   <!-- iOS 添加到主屏 -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="健身计划" />
+  <meta name="apple-mobile-web-app-title" content="FITNESS" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
   <link rel="manifest" href="manifest.webmanifest" />
@@ -23,33 +23,39 @@
 </head>
 <body>
   <header class="topbar">
-    <h1>健身计划</h1>
-    <nav class="tabs">
-      <button class="tab active" data-view="plans">训练计划</button>
-      <button class="tab" data-view="exercises">动作库</button>
-    </nav>
+    <svg class="embers" viewBox="0 0 1200 90" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="emberFill" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#ff8a00" />
+          <stop offset="55%" stop-color="#ffd24a" />
+          <stop offset="100%" stop-color="#fffbe6" />
+        </linearGradient>
+        <filter id="emberGlow" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="1.6" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <g filter="url(#emberGlow)" fill="url(#emberFill)">
+        <path class="ember e1" d="M200,40 C194,32 200,26 203,22 C206,26 206,32 200,40 Z" />
+        <path class="ember e2" d="M470,26 C465,20 465,16 468,12 C471,16 475,20 470,26 Z" />
+        <path class="ember e3" d="M760,44 C753,36 758,30 764,26 C769,30 767,36 760,44 Z" />
+        <path class="ember e4" d="M1030,30 C1025,24 1025,20 1027,16 C1030,20 1035,24 1030,30 Z" />
+      </g>
+    </svg>
+    <h1>FITNESS</h1>
   </header>
 
   <main>
-    <!-- 训练计划 -->
+    <!-- 训练计划（动作直接属于计划） -->
     <section id="view-plans" class="view active">
       <div class="toolbar">
         <button id="new-plan" class="primary">＋ 新建计划</button>
       </div>
       <div id="plans-list" class="cards"></div>
-      <p id="plans-empty" class="empty hidden">还没有计划，点击「新建计划」开始。</p>
-    </section>
-
-    <!-- 动作库 -->
-    <section id="view-exercises" class="view">
-      <div class="toolbar">
-        <input id="ex-name" placeholder="动作名称，例如：深蹲" />
-        <input id="ex-group" placeholder="部位，例如：腿" />
-        <input id="ex-video" placeholder="教学视频链接或本地文件路径（可留空）" />
-        <button id="add-exercise" class="primary">添加动作</button>
-      </div>
-      <div id="exercises-list" class="cards"></div>
-      <p id="exercises-empty" class="empty hidden">动作库为空，先添加一些动作吧。</p>
+      <p id="plans-empty" class="empty hidden">赶紧添加你的计划，开始运动吧！</p>
     </section>
   </main>
 
@@ -61,16 +67,12 @@
         <button class="icon-btn" data-close="plan-modal">✕</button>
       </div>
       <div class="modal-body">
-        <label>计划名称<input id="plan-name" placeholder="例如：推拉腿 4 分化" /></label>
-        <label>目标<input id="plan-goal" placeholder="例如：增肌 / 减脂 / 提升力量" /></label>
-        <label>备注<textarea id="plan-notes" rows="2"></textarea></label>
-
         <div class="items-head">
           <h3>训练动作</h3>
           <button id="add-item" class="ghost">＋ 添加动作</button>
         </div>
         <div id="plan-items"></div>
-        <p id="items-empty" class="empty hidden">还没有动作，点击「添加动作」。</p>
+        <p id="items-empty" class="empty hidden">点击「添加动作」，赶快开始你的训练吧！</p>
       </div>
       <div class="modal-foot">
         <button class="ghost" data-close="plan-modal">取消</button>
@@ -107,7 +109,12 @@
   <script src="db.js"></script>
   <script src="main.js"></script>
   <script>
-    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    const inTauri = !!(window.__TAURI__ || window.__TAURI_INTERNALS__);
+    if (
+      "serviceWorker" in navigator &&
+      location.protocol.startsWith("http") &&
+      !inTauri
+    ) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("sw.js").catch(() => {});
       });

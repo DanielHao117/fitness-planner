@@ -1,10 +1,11 @@
-const CACHE = "fitness-planner-v1";
+const CACHE = "fitness-planner-v4";
 const ASSETS = [
   "./index.html",
   "./styles.css",
   "./main.js",
   "./db.js",
   "./manifest.webmanifest",
+  "./flame.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
@@ -52,7 +53,11 @@ self.addEventListener("fetch", (event) => {
             .catch(() => {});
           return res;
         })
-        .catch(() => caches.match("./index.html"));
+        .catch(() =>
+          req.mode === "navigate"
+            ? caches.match("./index.html")
+            : Response.error()
+        );
     })
   );
 });

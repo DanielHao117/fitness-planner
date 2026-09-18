@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 110" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="flameFill" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#4a0700"/>
+      <stop offset="20%" stop-color="#9e1200"/>
+      <stop offset="44%" stop-color="#ff4d00"/>
+      <stop offset="70%" stop-color="#ff9a12"/>
+      <stop offset="100%" stop-color="#ffe08a"/>
+    </linearGradient>
+    <linearGradient id="coreFill" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff8400" stop-opacity="0.1"/>
+      <stop offset="55%" stop-color="#ffc233" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#fff4c8" stop-opacity="1"/>
+    </linearGradient>
+    <radialGradient id="baseGlow" cx="42%" cy="110%" r="70%">
+      <stop offset="0%" stop-color="#ff8a1e" stop-opacity="0.7"/>
+      <stop offset="45%" stop-color="#ff4200" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#ff4200" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="wisp" x="-12%" y="-60%" width="124%" height="220%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.02" numOctaves="2" seed="11" result="n">
+        <animate attributeName="baseFrequency" dur="7s"
+          values="0.008 0.02;0.013 0.028;0.008 0.02" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="1"/>
+    </filter>
+    <filter id="wisp2" x="-12%" y="-60%" width="124%" height="220%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.034" numOctaves="2" seed="4" result="n2">
+        <animate attributeName="baseFrequency" dur="5s"
+          values="0.015 0.034;0.022 0.046;0.015 0.034" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="n2" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.6"/>
+    </filter>
+  </defs>
+
+  <rect x="-60" y="34" width="1320" height="86" fill="url(#baseGlow)"/>
+
+  <path filter="url(#wisp)" fill="url(#flameFill)" d="M0,110 L0,96
+    C14,86 26,60 40,30
+    C58,58 66,84 90,96
+    C104,84 112,66 128,52
+    C146,66 156,84 172,94
+    C186,80 200,50 224,26
+    C250,50 262,80 286,94
+    C300,86 310,72 322,60
+    C338,72 348,86 362,95
+    C378,78 392,44 420,14
+    C450,44 464,78 492,95
+    C508,84 520,64 540,50
+    C560,64 572,84 590,95
+    C606,82 620,52 648,30
+    C678,52 692,82 718,95
+    C732,88 740,78 752,70
+    C768,78 778,88 792,96
+    C808,80 824,46 852,18
+    C882,46 896,80 924,96
+    C940,86 952,66 972,52
+    C994,66 1006,86 1024,96
+    C1040,82 1056,50 1084,26
+    C1114,50 1128,82 1154,96
+    C1170,88 1184,78 1200,84
+    L1200,110 Z"/>
+
+  <path filter="url(#wisp2)" fill="url(#coreFill)" opacity="0.9" d="M0,110 L0,102
+    C20,94 34,78 50,66
+    C68,78 80,94 102,102
+    C124,90 138,66 168,50
+    C198,66 212,90 236,102
+    C262,88 280,58 312,38
+    C346,58 362,88 388,102
+    C414,90 430,64 462,46
+    C494,64 510,90 536,102
+    C564,88 584,58 616,36
+    C650,58 668,88 694,102
+    C722,90 740,64 774,46
+    C808,64 826,90 852,102
+    C880,88 900,60 934,40
+    C968,60 986,88 1012,102
+    C1042,90 1062,66 1096,48
+    C1130,66 1148,90 1174,102
+    C1186,98 1194,95 1200,93
+    L1200,110 Z"/>
+</svg>

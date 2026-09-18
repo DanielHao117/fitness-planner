@@ -1,11 +1,56 @@
 const tauriCore = window.__TAURI__ && window.__TAURI__.core;
-const isTauri = !!(tauriCore && typeof tauriCore.invoke === "function");
-const invoke = isTauri ? tauriCore.invoke : (cmd, args) => window.FitnessDB.call(cmd, args);
+const IS_TAURI = !!(tauriCore && typeof tauriCore.invoke === "function");
+const invoke = IS_TAURI ? tauriCore.invoke : (cmd, args) => window.FitnessDB.call(cmd, args);
 const convertFileSrc =
-  isTauri && tauriCore.convertFileSrc ? tauriCore.convertFileSrc : (p) => p;
+  IS_TAURI && tauriCore.convertFileSrc ? tauriCore.convertFileSrc : (p) => p;
+
+const MUSCLE_GROUPS = ["胸", "肩", "背", "腿"];
+
+const EXERCISE_PRESETS = {
+  胸: [
+    "平板杠铃卧推",
+    "上斜杠铃卧推",
+    "平板哑铃卧推",
+    "上斜哑铃卧推",
+    "哑铃飞鸟",
+    "蝴蝶机夹胸",
+    "双杠臂屈伸",
+    "俯卧撑",
+  ],
+  肩: [
+    "站姿杠铃推举",
+    "坐姿哑铃推举",
+    "阿诺德推举",
+    "哑铃侧平举",
+    "哑铃前平举",
+    "俯身哑铃飞鸟",
+    "面拉",
+    "杠铃耸肩",
+  ],
+  背: [
+    "引体向上",
+    "高位下拉",
+    "杠铃划船",
+    "坐姿划船",
+    "单臂哑铃划船",
+    "硬拉",
+    "直臂下压",
+    "T杠划船",
+  ],
+  腿: [
+    "杠铃深蹲",
+    "前蹲",
+    "腿举",
+    "罗马尼亚硬拉",
+    "保加利亚分腿蹲",
+    "箭步蹲",
+    "坐姿腿屈伸",
+    "俯卧腿弯举",
+    "站姿提踵",
+  ],
+};
 
 const state = {
-  exercises: [],
   plans: [],
   editing: { id: null, items: [] },
 };
@@ -27,17 +72,6 @@ async function call(cmd, args) {
   }
 }
 
-/* ---------------- 视图切换 ---------------- */
-$$(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    $$(".tab").forEach((t) => t.classList.toggle("active", t === tab));
-    const view = tab.dataset.view;
-    $$(".view").forEach((v) =>
-      v.classList.toggle("active", v.id === `view-${view}`)
-    );
-  });
-});
-
 /* ---------------- 弹层 ---------------- */
 function openModal(id) {
   $(`#${id}`).classList.remove("hidden");
@@ -55,66 +89,6 @@ $$(".overlay").forEach((ov) =>
   })
 );
 
-/* ---------------- 动作库 ---------------- */
-async function loadExercises() {
-  state.exercises = await call("list_exercises");
-  renderExercises();
-}
-
-function renderExercises() {
-  const list = $("#exercises-list");
-  const empty = $("#exercises-empty");
-  list.innerHTML = state.exercises
-    .map(
-      (ex) => `
-      <div class="card">
-        <h3>${esc(ex.name)}</h3>
-        <div class="meta">${esc(ex.muscle_group || "未分类")}</div>
-        ${ex.video_url ? `<span class="tag">有视频</span>` : ""}
-        <div class="row">
-          ${
-            ex.video_url
-              ? `<button class="ghost" data-video="${ex.id}">看演示</button>`
-              : ""
-          }
-          <button class="ghost" data-del-ex="${ex.id}">删除</button>
-        </div>
-      </div>`
-    )
-    .join("");
-  empty.classList.toggle("hidden", state.exercises.length > 0);
-}
-
-$("#add-exercise").addEventListener("click", async () => {
-  const name = $("#ex-name").value.trim();
-  if (!name) return alert("请填写动作名称");
-  await call("create_exercise", {
-    input: {
-      name,
-      muscle_group: $("#ex-group").value.trim(),
-      video_url: $("#ex-video").value.trim() || null,
-      notes: null,
-    },
-  });
-  $("#ex-name").value = "";
-  $("#ex-group").value = "";
-  $("#ex-video").value = "";
-  await loadExercises();
-});
-
-$("#exercises-list").addEventListener("click", async (e) => {
-  const delId = e.target.dataset.delEx;
-  const vidId = e.target.dataset.video;
-  if (delId) {
-    if (!confirm("删除该动作？")) return;
-    await call("delete_exercise", { id: Number(delId) });
-    await loadExercises();
-  } else if (vidId) {
-    const ex = state.exercises.find((x) => x.id === Number(vidId));
-    if (ex) playVideo(ex.name, ex.video_url);
-  }
-});
-
 /* ---------------- 视频播放 ---------------- */
 function youtubeId(url) {
   const m = url.match(
@@ -131,7 +105,7 @@ function playVideo(title, url) {
     body.innerHTML = `<iframe src="https://www.youtube.com/embed/${yt}" allowfullscreen></iframe>`;
   } else if (!url) {
     body.innerHTML = `<p class="empty">该动作没有配置视频。</p>`;
-  } else if (!isTauri && !/^https?:\/\//i.test(url)) {
+  } else if (!IS_TAURI && !/^https?:\/\//i.test(url)) {
     body.innerHTML = `<p class="empty">浏览器版无法播放本地文件路径，请改用网络视频链接。</p>`;
   } else {
     const src = /^https?:\/\//i.test(url) ? url : convertFileSrc(url);
@@ -154,7 +128,6 @@ function renderPlans() {
       (p) => `
       <div class="card">
         <h3 class="plan-title" data-open="${p.id}">${esc(p.name)}</h3>
-        <div class="meta">${esc(p.goal || "未设置目标")}</div>
         <div class="meta">${p.item_count} 个动作 · ${esc(
         (p.created_at || "").slice(0, 10)
       )}</div>
@@ -169,34 +142,66 @@ function renderPlans() {
   empty.classList.toggle("hidden", state.plans.length > 0);
 }
 
+function autoPlanName() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} 训练`;
+}
+
 $("#new-plan").addEventListener("click", () => {
-  state.editing = { id: null, items: [] };
+  state.editing = { id: null, name: autoPlanName(), items: [] };
   $("#plan-modal-title").textContent = "新建计划";
-  $("#plan-name").value = "";
-  $("#plan-goal").value = "";
-  $("#plan-notes").value = "";
   renderPlanItems();
   openModal("plan-modal");
 });
 
+function nameOptions(group, current) {
+  const presets = EXERCISE_PRESETS[group] || [];
+  const has = presets.includes(current);
+  return (
+    `<option value="">选择动作</option>` +
+    (!has && current
+      ? `<option value="${esc(current)}" selected>${esc(current)}</option>`
+      : "") +
+    presets
+      .map(
+        (n) =>
+          `<option value="${esc(n)}" ${n === current ? "selected" : ""}>${esc(
+            n
+          )}</option>`
+      )
+      .join("") +
+    `<option value="__custom__">自定义名称…</option>`
+  );
+}
+
 function renderPlanItems() {
   const wrap = $("#plan-items");
   wrap.innerHTML =
-    `<div class="item-head"><span>动作</span><span>训练日</span><span>组</span><span>次</span><span>重量kg</span><span>休息s</span><span></span></div>` +
+    `<div class="item-head"><span>部位</span><span>动作</span><span>训练日</span><span>组</span><span>次</span><span>重量kg</span><span>休息s</span><span></span></div>` +
     state.editing.items
-      .map(
-        (it, i) => `
+      .map((it, i) => {
+        const presets = EXERCISE_PRESETS[it.muscle_group] || [];
+        const isCustom = it.custom || (!!it.name && !presets.includes(it.name));
+        const nameField = isCustom
+          ? `<input data-field="name" placeholder="自定义动作名称" value="${esc(
+              it.name
+            )}" />`
+          : `<select data-field="name">${nameOptions(
+              it.muscle_group,
+              it.name
+            )}</select>`;
+        return `
     <div class="item-row" data-index="${i}">
-      <select data-field="exercise_id">
-        ${state.exercises
-          .map(
-            (ex) =>
-              `<option value="${ex.id}" ${
-                ex.id === it.exercise_id ? "selected" : ""
-              }>${esc(ex.name)}</option>`
-          )
-          .join("")}
+      <select data-field="muscle_group">
+        ${MUSCLE_GROUPS.map(
+          (g) =>
+            `<option value="${g}" ${
+              g === it.muscle_group ? "selected" : ""
+            }>${g}</option>`
+        ).join("")}
       </select>
+      ${nameField}
       <input data-field="day_label" value="${esc(it.day_label)}" />
       <input data-field="sets" type="number" min="1" value="${it.sets}" />
       <input data-field="reps" type="number" min="1" value="${it.reps}" />
@@ -205,8 +210,8 @@ function renderPlanItems() {
       }" />
       <input data-field="rest_sec" type="number" min="0" value="${it.rest_sec}" />
       <button class="remove" data-remove="${i}" title="移除">✕</button>
-    </div>`
-      )
+    </div>`;
+      })
       .join("");
   $("#items-empty").classList.toggle("hidden", state.editing.items.length > 0);
 }
@@ -217,11 +222,37 @@ $("#plan-items").addEventListener("input", (e) => {
   const it = state.editing.items[Number(row.dataset.index)];
   const field = e.target.dataset.field;
   if (!field) return;
-  it[field] = ["sets", "reps", "weight_kg", "rest_sec", "exercise_id"].includes(
-    field
-  )
+  if (field === "name") {
+    if (e.target.tagName === "INPUT") {
+      it.name = e.target.value;
+      it.custom = true;
+    }
+    return;
+  }
+  it[field] = ["sets", "reps", "weight_kg", "rest_sec"].includes(field)
     ? Number(e.target.value)
     : e.target.value;
+});
+
+$("#plan-items").addEventListener("change", (e) => {
+  const row = e.target.closest(".item-row");
+  if (!row) return;
+  const it = state.editing.items[Number(row.dataset.index)];
+  const field = e.target.dataset.field;
+  if (field === "muscle_group") {
+    it.muscle_group = e.target.value;
+    if (!it.custom) it.name = "";
+    renderPlanItems();
+  } else if (field === "name") {
+    if (e.target.value === "__custom__") {
+      it.custom = true;
+      it.name = "";
+    } else {
+      it.custom = false;
+      it.name = e.target.value;
+    }
+    renderPlanItems();
+  }
 });
 
 $("#plan-items").addEventListener("click", (e) => {
@@ -232,11 +263,11 @@ $("#plan-items").addEventListener("click", (e) => {
 });
 
 $("#add-item").addEventListener("click", () => {
-  if (state.exercises.length === 0) {
-    return alert("请先到「动作库」添加动作。");
-  }
+  const group = MUSCLE_GROUPS[0];
   state.editing.items.push({
-    exercise_id: state.exercises[0].id,
+    name: EXERCISE_PRESETS[group][0],
+    muscle_group: group,
+    video_url: null,
     day_label: "第 1 天",
     sets: 3,
     reps: 10,
@@ -247,13 +278,18 @@ $("#add-item").addEventListener("click", () => {
 });
 
 $("#save-plan").addEventListener("click", async () => {
-  const name = $("#plan-name").value.trim();
-  if (!name) return alert("请填写计划名称");
+  const items = state.editing.items
+    .filter((it) => (it.name || "").trim())
+    .map((it, i) => {
+      const { custom, ...rest } = it;
+      return { ...rest, sort_order: i };
+    });
+  if (items.length === 0) return alert("请至少添加一个动作");
   const payload = {
-    name,
-    goal: $("#plan-goal").value.trim(),
-    notes: $("#plan-notes").value.trim() || null,
-    items: state.editing.items.map((it, i) => ({ ...it, sort_order: i })),
+    name: state.editing.name || autoPlanName(),
+    goal: "",
+    notes: null,
+    items,
   };
   if (state.editing.id == null) {
     await call("create_plan", { input: payload });
@@ -281,8 +317,11 @@ async function startEditPlan(id) {
   const plan = await call("get_plan", { id });
   state.editing = {
     id: plan.id,
+    name: plan.name,
     items: plan.items.map((it) => ({
-      exercise_id: it.exercise_id,
+      name: it.name,
+      muscle_group: it.muscle_group,
+      video_url: it.video_url ?? null,
       day_label: it.day_label,
       sets: it.sets,
       reps: it.reps,
@@ -291,9 +330,6 @@ async function startEditPlan(id) {
     })),
   };
   $("#plan-modal-title").textContent = "编辑计划";
-  $("#plan-name").value = plan.name;
-  $("#plan-goal").value = plan.goal;
-  $("#plan-notes").value = plan.notes || "";
   renderPlanItems();
   openModal("plan-modal");
 }
@@ -316,7 +352,7 @@ async function showPlanDetail(id) {
           <div class="card" style="margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
               <div>
-                <h3>${esc(it.exercise_name)}</h3>
+                <h3>${esc(it.name)}</h3>
                 <div class="meta">${it.sets} 组 × ${it.reps} 次 · ${
               it.weight_kg
             } kg · 休息 ${it.rest_sec}s${
@@ -327,7 +363,7 @@ async function showPlanDetail(id) {
                 it.video_url
                   ? `<button class="ghost" data-video-url="${esc(
                       it.video_url
-                    )}" data-video-name="${esc(it.exercise_name)}">看演示</button>`
+                    )}" data-video-name="${esc(it.name)}">看演示</button>`
                   : ""
               }
             </div>
@@ -338,9 +374,7 @@ async function showPlanDetail(id) {
     )
     .join("");
   $("#detail-body").innerHTML =
-    `<div class="meta">目标：${esc(plan.goal || "未设置")}${
-      plan.notes ? " · " + esc(plan.notes) : ""
-    }</div>` + (html || `<p class="empty">该计划还没有动作。</p>`);
+    html || `<p class="empty">该计划还没有动作。</p>`;
   openModal("detail-modal");
 }
 
@@ -351,6 +385,5 @@ $("#detail-body").addEventListener("click", (e) => {
 
 /* ---------------- 启动 ---------------- */
 (async function init() {
-  await loadExercises();
   await loadPlans();
 })();

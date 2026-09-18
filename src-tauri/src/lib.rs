@@ -9,9 +9,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::list_exercises,
-            commands::create_exercise,
-            commands::delete_exercise,
             commands::list_plans,
             commands::get_plan,
             commands::create_plan,

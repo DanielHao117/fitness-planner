@@ -1,6 +1,6 @@
 {
-  "name": "健身计划",
-  "short_name": "健身计划",
+  "name": "FITNESS",
+  "short_name": "FITNESS",
   "description": "训练计划与动作库管理",
   "lang": "zh-CN",
   "start_url": "./index.html",
