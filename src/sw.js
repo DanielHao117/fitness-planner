@@ -1,4 +1,4 @@
-const CACHE = "fitness-planner-v21";
+const CACHE = "fitness-planner-v22";
 const ASSETS = [
   "./index.html",
   "./styles.css",
@@ -42,6 +42,23 @@ self.addEventListener("fetch", (event) => {
   }
   if (url.origin !== self.location.origin) return;
 
+  if (req.mode === "navigate") {
+    // 导航请求走网络优先，保证打开页面总是最新版；离线时回退缓存
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches
+            .open(CACHE)
+            .then((cache) => cache.put(req, copy))
+            .catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
@@ -54,11 +71,7 @@ self.addEventListener("fetch", (event) => {
             .catch(() => {});
           return res;
         })
-        .catch(() =>
-          req.mode === "navigate"
-            ? caches.match("./index.html")
-            : Response.error()
-        );
+        .catch(() => Response.error());
     })
   );
 });
