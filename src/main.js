@@ -176,14 +176,10 @@ function renderPlans() {
   list.innerHTML = state.plans
     .map(
       (p) => `
-      <div class="card">
+      <div class="card plan-card">
         <h3 class="plan-title" data-open="${p.id}">${esc(p.name)}</h3>
-        <div class="meta">${p.item_count} 个动作 · ${esc(
-        (p.created_at || "").slice(0, 10)
-      )}</div>
         <div class="row">
-          <button class="ghost" data-open="${p.id}">查看</button>
-          <button class="ghost" data-edit="${p.id}">编辑</button>
+          <button class="ghost" data-edit="${p.id}">内容</button>
           <button class="ghost" data-del-plan="${p.id}">删除</button>
         </div>
       </div>`
@@ -191,6 +187,15 @@ function renderPlans() {
     .join("");
   empty.classList.toggle("hidden", state.plans.length > 0);
 }
+
+function setPlansListVisible(visible) {
+  $("#plans-list").classList.toggle("hidden", !visible);
+  $("#show-plans").textContent = visible ? "收起列表" : "计划列表";
+}
+
+$("#show-plans").addEventListener("click", () => {
+  setPlansListVisible($("#plans-list").classList.contains("hidden"));
+});
 
 function autoPlanName() {
   const d = new Date();
@@ -203,6 +208,7 @@ $("#new-plan").addEventListener("click", () => {
   $("#plan-modal-title").textContent = "新建计划";
   renderPlanItems();
   openModal("plan-modal");
+  requestAnimationFrame(resetPlanItemsScroll);
 });
 
 function nameOptions(group, current) {
@@ -324,7 +330,15 @@ $("#plan-items").addEventListener("click", (e) => {
   if (idx === undefined) return;
   state.editing.items.splice(Number(idx), 1);
   renderPlanItems();
+  resetPlanItemsScroll();
 });
+
+function resetPlanItemsScroll() {
+  const wrap = $("#plan-items");
+  if (wrap) wrap.scrollLeft = 0;
+  const body = wrap && wrap.closest(".modal-body");
+  if (body) body.scrollLeft = 0;
+}
 
 /* ---------------- 组/次/重量 轮盘 ---------------- */
 const WHEEL_ITEM_H = 40;
@@ -430,6 +444,7 @@ $("#add-item").addEventListener("click", () => {
     rest_sec: 60,
   });
   renderPlanItems();
+  resetPlanItemsScroll();
 });
 
 $("#save-plan").addEventListener("click", async () => {
@@ -453,6 +468,7 @@ $("#save-plan").addEventListener("click", async () => {
   }
   closeModal("plan-modal");
   await loadPlans();
+  setPlansListVisible(true);
 });
 
 $("#plans-list").addEventListener("click", async (e) => {
@@ -487,6 +503,7 @@ async function startEditPlan(id) {
   $("#plan-modal-title").textContent = "编辑计划";
   renderPlanItems();
   openModal("plan-modal");
+  requestAnimationFrame(resetPlanItemsScroll);
 }
 
 async function showPlanDetail(id) {
