@@ -1,4 +1,4 @@
-const CACHE = "fitness-planner-v20";
+const CACHE = "fitness-planner-v21";
 const ASSETS = [
   "./index.html",
   "./styles.css",
