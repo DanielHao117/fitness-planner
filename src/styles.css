@@ -18,12 +18,14 @@ body {
   font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
   background-color: var(--bg);
   background-image: url("fitness-bg.jpg");
-  background-size: contain;
+  background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
   background-attachment: fixed;
   color: var(--text);
   font-size: 14px;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .topbar {
